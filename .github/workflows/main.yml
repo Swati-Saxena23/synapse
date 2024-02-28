@@ -1,0 +1,38 @@
+name: Deploy Synapse Data Flow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-dataflow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Azure CLI
+        uses: azure/setup-azure-cli@v1
+        with:
+          azcliversion: 2.29.0
+
+      - name: Login to Azure
+        run: az login --service-principal -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_CLIENT_ID }} -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_SERVICE_PRINCIPAL_TENANT_ID }}
+
+      - name: Create Synapse Data Flow
+        run: |
+          SYNAPSE_WORKSPACE_NAME="synapseanalytics23490"
+          SYNAPSE_DATA_FLOW_NAME="dataflowtesting"
+          DATA_FLOW_DEFINITION_FILE="synapse/DataflowEntireData.json"
+          
+          # Get Synapse Workspace ID
+          WORKSPACE_ID=$(az synapse workspace show --name $SYNAPSE_WORKSPACE_NAME --resource-group $SYNAPSE_RESOURCE_GROUP --query 'id' --output tsv)
+
+          # Create Synapse Data Flow
+          az rest --method put --uri "$WORKSPACE_ID/dataflows/$SYNAPSE_DATA_FLOW_NAME" --body "@$DATA_FLOW_DEFINITION_FILE" --headers "Content-Type=application/json"
+          
+    env:
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      SYNAPSE_RESOURCE_GROUP: "synapse_rg_new"

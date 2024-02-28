@@ -21,9 +21,9 @@ jobs:
         uses: Azure/cli@v1.0.9
         with:
           inlineScript: |
+            export AZURE_CONFIG_DIR=${{ github.workspace }}/azure-config
             az login --service-principal -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_CLIENT_ID }} -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_SERVICE_PRINCIPAL_TENANT_ID }}
           azcliversion: 2.29.0
-          azconfigdir: ${{ github.workspace }}/temp_config
 
       - name: Create Synapse Data Flow
         run: |

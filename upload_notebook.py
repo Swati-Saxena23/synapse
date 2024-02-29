@@ -12,7 +12,7 @@ credential = DefaultAzureCredential(
     client_secret=client_secret,
 )
 
-notebook_path = "path/to/your/notebook.ipynb"
+notebook_path = "addition.ipynb"
 
 with NotebookClient(workspace_url, notebook_path, credential) as notebook_client:
     notebook_client.upload()

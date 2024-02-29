@@ -1,0 +1,30 @@
+name: Synapse Notebook Upload
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  synapse-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install azure-mgmt-synapse
+
+    - name: Upload Notebook to Synapse
+      run: python synapse/upload_notebook.py
+      env:
+        SYNAPSE_WORKSPACE_URL: ${{ secrets.SYNAPSE_WORKSPACE_URL }}
+        SYNAPSE_CLIENT_ID: ${{ secrets.SYNAPSE_CLIENT_ID }}
+        SYNAPSE_CLIENT_SECRET: ${{ secrets.SYNAPSE_CLIENT_SECRET }}
+        SYNAPSE_TENANT_ID: ${{ secrets.SYNAPSE_TENANT_ID }}

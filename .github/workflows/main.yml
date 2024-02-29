@@ -1,38 +1,30 @@
-name: Deploy Synapse Data Flow
-
+name: Synapse Notebook Upload
 on:
   push:
     branches:
       - main
 
 jobs:
-  deploy-dataflow:
+  synapse-upload:
     runs-on: ubuntu-latest
 
-    env:
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      SYNAPSE_RESOURCE_GROUP: "synapse_rg_new"
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
 
-      - name: Azure CLI Action
-        uses: Azure/cli@v1.0.9
-        with:
-          inlineScript: |
-            export AZURE_CONFIG_DIR=${{ github.workspace }}/azure-config
-            az login --service-principal -u ${{ secrets.AZURE_SERVICE_PRINCIPAL_CLIENT_ID }} -p ${{ secrets.AZURE_SERVICE_PRINCIPAL_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_SERVICE_PRINCIPAL_TENANT_ID }}
-          azcliversion: 2.29.0
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install azure-mgmt-synapse
 
-      - name: Create Synapse Data Flow
-        run: |
-          SYNAPSE_WORKSPACE_NAME="synapseanalytics23490"
-          SYNAPSE_DATA_FLOW_NAME="dataflowtesting"
-          DATA_FLOW_DEFINITION_FILE="synapse/DataflowEntireData.json"
-          
-          # Get Synapse Workspace ID
-          WORKSPACE_ID=$(az synapse workspace show --name $SYNAPSE_WORKSPACE_NAME --resource-group $SYNAPSE_RESOURCE_GROUP --query 'id' --output tsv)
-
-          # Create Synapse Data Flow
-          az rest --method put --uri "$WORKSPACE_ID/dataflows/$SYNAPSE_DATA_FLOW_NAME" --body "@$DATA_FLOW_DEFINITION_FILE" --headers "Content-Type=application/json"
+    - name: Upload Notebook to Synapse
+      run: python synapse/upload_notebook.py
+      env:
+        SYNAPSE_WORKSPACE_URL: ${{ secrets.SYNAPSE_WORKSPACE_URL }}
+        SYNAPSE_CLIENT_ID: ${{ secrets.SYNAPSE_CLIENT_ID }}
+        SYNAPSE_CLIENT_SECRET: ${{ secrets.SYNAPSE_CLIENT_SECRET }}
+        SYNAPSE_TENANT_ID: ${{ secrets.SYNAPSE_TENANT_ID }}
